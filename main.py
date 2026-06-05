@@ -1,6 +1,5 @@
 import os
 import logging
-import asyncio
 from dotenv import load_dotenv
 from telegram import Update, BotCommand
 from telegram.ext import (
@@ -39,9 +38,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.document:
         await handle_document(update, context)
         return
-
     if update.message.text:
-        # Try admin state first
         handled = await handle_admin_message(update, context)
         if not handled:
             await handle_text_menu(update, context)
@@ -57,10 +54,9 @@ async def post_init(application: Application):
         BotCommand("lang", "Tilni o'zgartirish"),
         BotCommand("help", "Yordam"),
     ])
-    logger.info("✅ Bot commands set.")
 
-async def main():
-    await init_db()
+def main():
+    init_db()
     logger.info("✅ Database initialized.")
 
     app = (
@@ -71,7 +67,6 @@ async def main():
         .build()
     )
 
-    # Commands
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("status", cmd_status))
@@ -80,15 +75,11 @@ async def main():
     app.add_handler(CommandHandler("quiz", cmd_quiz))
     app.add_handler(CommandHandler("restart", cmd_restart))
     app.add_handler(CommandHandler("finish", cmd_finish))
-
-    # Callbacks
     app.add_handler(CallbackQueryHandler(handle_callback))
-
-    # Messages (text + documents)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_message))
 
     logger.info("🚀 Bot ishga tushdi!")
-    await app.run_polling(drop_pending_updates=True)
+    app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
